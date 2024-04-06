@@ -62,15 +62,17 @@ public class AssetTypeManager
         return T.Read(valueField, Version);
     }
 
-    public static bool TryGetExporter(IAssetType asset, [NotNullWhen(true)]out IAssetTypeExporter? exporter)
+    public bool TryGetExporter(IAssetType asset, [NotNullWhen(true)]out IAssetTypeExporter? exporter)
     {
-        if (CanExport(asset))
-        {
-            exporter = (asset as IAssetTypeExporter)!;
-            return true;
-        }
         exporter = null;
-        return false;
+        if (asset is IAssetTypeExporter exporterSelf)
+            exporter = exporterSelf;
+        else if (asset is Sprite sprite)
+            exporter = sprite.CreateExporter(am);
+        else
+            return false;
+        
+        return true;
     }
 
     public static bool CanExport<T>()

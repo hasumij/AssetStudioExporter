@@ -76,51 +76,61 @@ public class Sprite : INamedObject, IAssetType, IAssetTypeReader<Sprite>
         return s;
     }
 
-    public bool Export(AssetsFileInstance assetsFile, Stream stream, AssetsManager am)
+
+
+    private class SpriteExporter(Sprite sprite, AssetsManager am) : IAssetTypeExporter
     {
-        var format = ExporterSetting.Default.ImageExportFormat;
-        var helper = new SpriteHelper(assetsFile, am);
-
-        var image = helper.GetImage(this);
-        if (image is null)
+        public bool Export(AssetsFileInstance assetsFile, Stream stream)
         {
-            return false;
-        }
+            var format = ExporterSetting.Default.ImageExportFormat;
+            var helper = new SpriteHelper(assetsFile, am);
 
-        using (image)
-        {
-            switch (format)
+            var image = helper.GetImage(sprite);
+            if (image is null)
             {
-                case ImageFormat.Jpeg:
-                    image.SaveAsJpeg(stream);
-                    break;
-                case ImageFormat.Webp:
-                    image.SaveAsWebp(stream);
-                    break;
-                case ImageFormat.Tga:
-                    image.SaveAsTga(stream);
-                    break;
-                case ImageFormat.Tiff:
-                    image.SaveAsTiff(stream);
-                    break;
-                case ImageFormat.Bmp:
-                    image.SaveAsBmp(stream);
-                    break;
-                case ImageFormat.Gif:
-                    image.SaveAsGif(stream);
-                    break;
-                default:
-                    image.SaveAsPng(stream);
-                    break;
+                return false;
             }
+
+            using (image)
+            {
+                switch (format)
+                {
+                    case ImageFormat.Jpeg:
+                        image.SaveAsJpeg(stream);
+                        break;
+                    case ImageFormat.Webp:
+                        image.SaveAsWebp(stream);
+                        break;
+                    case ImageFormat.Tga:
+                        image.SaveAsTga(stream);
+                        break;
+                    case ImageFormat.Tiff:
+                        image.SaveAsTiff(stream);
+                        break;
+                    case ImageFormat.Bmp:
+                        image.SaveAsBmp(stream);
+                        break;
+                    case ImageFormat.Gif:
+                        image.SaveAsGif(stream);
+                        break;
+                    default:
+                        image.SaveAsPng(stream);
+                        break;
+                }
+            }
+            return true;
         }
-        return true;
+
+        public string GetFileExtension(string fileName)
+        {
+            if (ExporterSetting.Default.ImageExportFormat == ImageFormat.Auto)
+                return ".png";
+            return "." + ExporterSetting.Default.ImageExportFormat.ToString().ToLower();
+        }
     }
 
-    public string GetFileExtension(string fileName)
+    public IAssetTypeExporter CreateExporter(AssetsManager am)
     {
-        if (ExporterSetting.Default.ImageExportFormat == ImageFormat.Auto)
-            return ".png";
-        return "." + ExporterSetting.Default.ImageExportFormat.ToString().ToLower();
+        return new SpriteExporter(this, am);
     }
 }
