@@ -4,6 +4,7 @@ using AssetsTools.NET.Texture;
 using AssetStudio;
 using AssetStudioExporter.AssetTypes.Feature;
 using AssetStudioExporter.Export;
+using AssetStudioExporter.Util;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
@@ -53,9 +54,15 @@ namespace AssetStudioExporter.AssetTypes
 
             pictureData = textureFile.pictureData;
         }
+
+        private UnityVersion version;
         public static Texture2D Read(AssetTypeValueField value, UnityVersion version)
         {
-            return new Texture2D(ReadTextureFile(value));
+            var t = new Texture2D(ReadTextureFile(value))
+            {
+                version = version
+            };
+            return t;
         }
 
         public bool Export(AssetsFileInstance assetsFile, Stream stream)
@@ -89,20 +96,10 @@ namespace AssetStudioExporter.AssetTypes
 
         public bool Export(AssetsFileInstance assetsFile, Stream stream, ImageFormat format)
         {
-            var rawdata = GetAssetData(assetsFile);
-            if (rawdata is null || rawdata.Length == 0)
+            var image = GetImage(assetsFile);
+            if (image is null)
             {
                 return false;
-            }
-
-            Image<Bgra32> image;
-            if (ExporterSetting.Default.TextureDecoder == TextureDecoderType.AssetStudio)
-            {
-                image = ConvertToImage(rawdata, true);
-            } else
-            {
-                var decoded = DecodeManaged(rawdata, m_TextureFormat, m_Width, m_Height);
-                image = ConvertToImageFromDecoded(decoded, true);
             }
 
             using(image)
@@ -136,9 +133,28 @@ namespace AssetStudioExporter.AssetTypes
         }
 
 
-        public Image<Bgra32> ConvertToImage(byte[] data, bool flip = true)
+        public Image<Bgra32>? GetImage(AssetsFileInstance assetsFile, bool flip = true)
         {
-            var converter = new Texture2DConverter(this, new[] { 2019 });
+            var rawdata = GetAssetData(assetsFile);
+            if (rawdata is null || rawdata.Length == 0)
+            {
+                return null;
+            }
+
+            if (ExporterSetting.Default.TextureDecoder == TextureDecoderType.AssetStudio)
+            {
+                return ConvertToImage(rawdata, flip);
+            }
+            else
+            {
+                var decoded = DecodeManaged(rawdata, m_TextureFormat, m_Width, m_Height);
+                return ConvertToImageFromDecoded(decoded, flip);
+            }
+        }
+
+        Image<Bgra32>? ConvertToImage(byte[] data, bool flip = true)
+        {
+            var converter = new Texture2DConverter(this, version);
             var buff = BigArrayPool<byte>.Shared.Rent(m_Width * m_Height * 4);
             try
             {
@@ -159,7 +175,7 @@ namespace AssetStudioExporter.AssetTypes
             }
         }
         
-        public Image<Bgra32> ConvertToImageFromDecoded(byte[] decoded, bool flip = true)
+        Image<Bgra32> ConvertToImageFromDecoded(byte[] decoded, bool flip = true)
         {
             var image = Image.LoadPixelData<Bgra32>(decoded, m_Width, m_Height);
             if (flip)

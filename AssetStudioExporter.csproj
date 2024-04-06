@@ -8,7 +8,7 @@
 	<PlatformTarget>AnyCPU</PlatformTarget>
 	<Platforms>x64;x86</Platforms>
 	<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-	<LangVersion>11.0</LangVersion>
+	<LangVersion>12.0</LangVersion>
 	<EnablePreviewFeatures>True</EnablePreviewFeatures>
 	<GenerateRequiresPreviewFeaturesAttribute>True</GenerateRequiresPreviewFeaturesAttribute>
   </PropertyGroup>
@@ -43,7 +43,8 @@
   <ItemGroup>
     <PackageReference Include="AssetsTools.NET" Version="3.0.0" />
     <PackageReference Include="AssetsTools.NET.Texture" Version="1.0.0" />
-    <PackageReference Include="SixLabors.ImageSharp" Version="2.1.1" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="2.1.7" />
+    <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="1.0.0" />
   </ItemGroup>
 
   <ItemGroup>

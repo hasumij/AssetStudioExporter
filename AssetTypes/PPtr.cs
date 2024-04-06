@@ -59,19 +59,42 @@ public class PPtr<T> : IAssetTypeReader<PPtr<T>> where T : class
     /// <param name="relativeFile">相对的AssetsFile</param>
     /// <param name="am">所用的AssetsManager</param>
     [MemberNotNull(nameof(Instance))]
-    public void FindInstance<R>(AssetsFileInstance relativeFile, AssetsManager am) where R : IAssetTypeReader<T>
+    public void FindInstance<R>(AssetsFileInstance relativeFile, AssetsManager am) 
+        where R : class, T, IAssetTypeReader<T>
     {
+
         try
         {
             var bf = FollowReference(relativeFile, am, false);
-            var version = VersionCache.GetVersion(relativeFile);
+            if (bf is null)
+            {
+                throw new InvalidDataException($"PPtr {this} doesn't exists");
+            }
+            var version = relativeFile.GetVersion();
             Instance = R.Read(bf, version);
+            return;
         }
         catch (Exception ex)
         {
-            throw new InvalidDataException($"Cannot read PPtr {{ FileID = {m_FileID}, PathID = {m_PathID} }}", ex);
+            throw new InvalidDataException($"Cannot read PPtr {this}", ex);
         }
 
+    }
+
+    public bool TryFindInstance<R>([NotNullWhen(true)]out T? instance, AssetsFileInstance relativeFile, AssetsManager am) 
+        where R : class, T, IAssetTypeReader<T>
+    {
+        try
+        {
+            FindInstance<R>(relativeFile, am);
+            instance = Instance;
+            return instance is not null;
+        }
+        catch (Exception)
+        {
+            instance = null;
+            return false;
+        }
     }
 
     /// <summary>
@@ -87,9 +110,14 @@ public class PPtr<T> : IAssetTypeReader<PPtr<T>> where T : class
     /// 如果<see cref="Instance"/>有值会丢弃
     /// </summary>
     /// <typeparam name="U">新的类型</typeparam>
-    public PPtr<U> Cast<U>() where U : class
+    public PPtr<U> Cast<U>() where U : class, IAssetTypeReader<U>
     {
         return new PPtr<U>(m_FileID, m_PathID);
+    }
+
+    public override string ToString()
+    {
+        return $"{{ FileID = {m_FileID}, PathID = {m_PathID} }}";
     }
 
     public static PPtr<T> Read(AssetTypeValueField value, UnityVersion version)
@@ -103,7 +131,7 @@ public class PPtr<T> : IAssetTypeReader<PPtr<T>> where T : class
 }
 
 
-public class PPtr : PPtr<object>
+public class PPtr : PPtr<Object>
 {
     public PPtr(AssetTypeValueField value) : base(value)
     {

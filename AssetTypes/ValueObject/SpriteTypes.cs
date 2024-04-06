@@ -192,7 +192,7 @@ public class SpriteRenderData : IAssetTypeReader<SpriteRenderData>
 
         //if (version[0] > 5 || (version[0] == 5 && version[1] >= 6)) //5.6 and up
         rd.m_SubMeshes = value["m_SubMeshes"].AsList(x => SubMesh.Read(x, version));
-        rd.m_IndexBuffer = value["m_IndexBuffer"].AsByteArray;
+        rd.m_IndexBuffer = value["m_IndexBuffer"]["Array"].AsByteArray;
         rd.m_VertexData = VertexData.Read(value["m_VertexData"], version);
         //} else {
         //  rd.vertices = value["vertices"].AsList(SpriteVertex.Read);

@@ -3,7 +3,9 @@ using AssetsTools.NET.Extra;
 using AssetStudio;
 using AssetStudioExporter.AssetTypes.Feature;
 using AssetStudioExporter.AssetTypes.ValueObject;
+using AssetStudioExporter.Export;
 using AssetStudioExporter.Util;
+using SixLabors.ImageSharp;
 using System.Reflection.PortableExecutable;
 
 namespace AssetStudioExporter.AssetTypes;
@@ -72,5 +74,53 @@ public class Sprite : INamedObject, IAssetType, IAssetTypeReader<Sprite>
         }
 
         return s;
+    }
+
+    public bool Export(AssetsFileInstance assetsFile, Stream stream, AssetsManager am)
+    {
+        var format = ExporterSetting.Default.ImageExportFormat;
+        var helper = new SpriteHelper(assetsFile, am);
+
+        var image = helper.GetImage(this);
+        if (image is null)
+        {
+            return false;
+        }
+
+        using (image)
+        {
+            switch (format)
+            {
+                case ImageFormat.Jpeg:
+                    image.SaveAsJpeg(stream);
+                    break;
+                case ImageFormat.Webp:
+                    image.SaveAsWebp(stream);
+                    break;
+                case ImageFormat.Tga:
+                    image.SaveAsTga(stream);
+                    break;
+                case ImageFormat.Tiff:
+                    image.SaveAsTiff(stream);
+                    break;
+                case ImageFormat.Bmp:
+                    image.SaveAsBmp(stream);
+                    break;
+                case ImageFormat.Gif:
+                    image.SaveAsGif(stream);
+                    break;
+                default:
+                    image.SaveAsPng(stream);
+                    break;
+            }
+        }
+        return true;
+    }
+
+    public string GetFileExtension(string fileName)
+    {
+        if (ExporterSetting.Default.ImageExportFormat == ImageFormat.Auto)
+            return ".png";
+        return "." + ExporterSetting.Default.ImageExportFormat.ToString().ToLower();
     }
 }
